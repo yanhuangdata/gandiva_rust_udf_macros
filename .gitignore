@@ -1,0 +1,6 @@
+/target
+/Cargo.lock
+.idea/gandiva_rust_udf_macro.iml
+.gitignore
+.idea/modules.xml
+.idea/vcs.xml
