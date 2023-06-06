@@ -8,17 +8,42 @@ use syn::{ItemFn, FnArg, PatType, ReturnType};
 #[proc_macro]
 pub fn udf(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let input = proc_macro2::TokenStream::from(input);
-    udf_impl(input).into()
+    udf_impl(input, false).into()
 }
 
-pub fn udf_impl(input: proc_macro2::TokenStream) -> proc_macro2::TokenStream {
-    let function: ItemFn = syn::parse2(input).unwrap();
+#[proc_macro]
+pub fn udf_with_context(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+    let input = proc_macro2::TokenStream::from(input);
+    udf_impl(input, true).into()
+}
+
+fn _extract_params(input: proc_macro2::TokenStream) -> ItemFn {
+    // let mut input = proc_macro2::TokenStream::from(input).into_iter().collect::<Vec<_>>();
+    // let needs_context = match input.pop() {
+    //     Some(proc_macro2::TokenTree::Literal(lit)) => lit.to_string().parse::<bool>().unwrap_or(false),
+    //     token => {
+    //         // if the last token is not a literal, put it back
+    //         input.push(token.unwrap());
+    //         false
+    //     }
+    // };
+    // let input = proc_macro2::TokenStream::from_iter(input.into_iter());
+    syn::parse2(input).unwrap()
+}
+
+pub fn udf_impl(input: proc_macro2::TokenStream, needs_context: bool) -> proc_macro2::TokenStream {
+    let function = _extract_params(input);
     let function_name = &function.sig.ident;
     let return_type = &function.sig.output;
+
     let mut wrapper_args = Vec::new();
     let mut call_args = Vec::new();
-
     let mut arg_types = Vec::new();
+
+    if needs_context {
+        wrapper_args.push(quote! { ctx: i64 });
+    }
+
     for input in &function.sig.inputs {
         if let FnArg::Typed(PatType { ty, pat, .. }) = input {
             let arg_name = pat;
@@ -59,3 +84,4 @@ pub fn udf_impl(input: proc_macro2::TokenStream) -> proc_macro2::TokenStream {
 
     expanded
 }
+

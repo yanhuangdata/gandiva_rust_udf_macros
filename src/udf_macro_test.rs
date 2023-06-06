@@ -16,7 +16,7 @@ mod tests {
                 my_udf()
             }
         };
-        let actual = udf_impl(input);
+        let actual = udf_impl(input, false);
         assert_eq!(actual.to_string(), expected.to_string());
     }
 
@@ -34,7 +34,7 @@ mod tests {
                 my_udf(x)
             }
         };
-        let actual = udf_impl(input);
+        let actual = udf_impl(input, false);
         assert_eq!(actual.to_string(), expected.to_string());
     }
 
@@ -52,7 +52,7 @@ mod tests {
                 my_udf(x, y)
             }
         };
-        let actual = udf_impl(input);
+        let actual = udf_impl(input, false);
         assert_eq!(actual.to_string(), expected.to_string());
     }
 
@@ -70,7 +70,25 @@ mod tests {
                 my_udf(str::from_utf8(slice::from_raw_parts(x as *const u8, x_len as usize)).unwrap())
             }
         };
-        let actual = udf_impl(input);
+        let actual = udf_impl(input, false);
+        assert_eq!(actual.to_string(), expected.to_string());
+    }
+
+    #[test]
+    fn test_needs_context_udf() {
+        let input: proc_macro2::TokenStream = quote::quote! {
+            pub fn my_udf(x: &str) -> bool {
+                true
+            }
+        };
+
+        let expected: proc_macro2::TokenStream = quote::quote! {
+            #[no_mangle]
+            pub extern "C" fn my_udf_utf8(ctx: i64, x: *const c_char, x_len: i32) -> bool {
+                my_udf(str::from_utf8(slice::from_raw_parts(x as *const u8, x_len as usize)).unwrap())
+            }
+        };
+        let actual = udf_impl(input, true);
         assert_eq!(actual.to_string(), expected.to_string());
     }
 }
