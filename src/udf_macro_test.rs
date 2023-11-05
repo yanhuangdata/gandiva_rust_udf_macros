@@ -129,7 +129,7 @@ mod tests {
     }
 
     #[test]
-    fn test_gandiva_context_fns() {
+    pub fn test_gandiva_context_fns() {
         let context_fns = context_fns_impl();
         assert!(!context_fns.is_empty());
     }

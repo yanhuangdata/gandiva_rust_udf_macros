@@ -2,11 +2,14 @@ mod udf_macro_test;
 
 extern crate proc_macro;
 
-use quote::{quote, format_ident};
-use syn::{parse_macro_input, ItemFn, FnArg, PatType, ReturnType};
+use quote::{format_ident, quote};
+use syn::{parse_macro_input, FnArg, ItemFn, PatType, ReturnType};
 
 #[proc_macro_attribute]
-pub fn udf(attrs: proc_macro::TokenStream, input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+pub fn udf(
+    attrs: proc_macro::TokenStream,
+    input: proc_macro::TokenStream,
+) -> proc_macro::TokenStream {
     let mut needs_context = false;
     let _ = _extract_needs_context(attrs, &mut needs_context);
     let input = proc_macro2::TokenStream::from(input);
@@ -18,7 +21,10 @@ pub fn context_fns(_input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     context_fns_impl().into()
 }
 
-fn _extract_needs_context(attrs: proc_macro::TokenStream, needs_context: &mut bool) -> proc_macro::TokenStream {
+fn _extract_needs_context(
+    attrs: proc_macro::TokenStream,
+    needs_context: &mut bool,
+) -> proc_macro::TokenStream {
     let udf_attr_parser = syn::meta::parser(|meta| {
         if meta.path.is_ident("needs_context") {
             *needs_context = true;
@@ -91,11 +97,16 @@ fn _map_type(arg_type: &str) -> String {
         "i16" => "int16",
         "i32" => "int32",
         "i64" => "int64",
+        "u8" => "uint8",
+        "u16" => "uint16",
+        "u32" => "uint32",
+        "u64" => "uint64",
         "f32" => "float32",
         "f64" => "float64",
         "& str" => "utf8",
         _ => arg_type,
-    }.to_string()
+    }
+        .to_string()
 }
 
 fn udf_impl(input: proc_macro2::TokenStream, needs_context: bool) -> proc_macro2::TokenStream {
@@ -110,7 +121,6 @@ fn udf_impl(input: proc_macro2::TokenStream, needs_context: bool) -> proc_macro2
     if needs_context {
         wrapper_args.push(quote! { ctx: i64 });
     }
-
 
     for input in &function.sig.inputs {
         if let FnArg::Typed(PatType { ty, pat, .. }) = input {
@@ -170,4 +180,3 @@ fn udf_impl(input: proc_macro2::TokenStream, needs_context: bool) -> proc_macro2
 
     expanded
 }
-
