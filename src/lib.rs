@@ -44,10 +44,16 @@ fn _extract_params(input: proc_macro2::TokenStream) -> ItemFn {
 
 fn context_fns_impl() -> proc_macro2::TokenStream {
     quote! {
-        #[cfg(not(test))]
-        extern "C" {
-            fn gdv_fn_context_arena_malloc(context: i64, size: i32) -> *mut i8;
-            fn gdv_fn_context_set_error_msg(context: i64, error_msg: *const i8);
+        static mut GDV_FN_CONTEXT_ARENA_MALLOC: Option<unsafe extern "C" fn(i64, i32) -> *mut i8> = None;
+        static mut GDV_FN_CONTEXT_SET_ERROR_MSG: Option<unsafe extern "C" fn(i64, *const i8)> = None;
+
+        #[no_mangle]
+        pub extern "C" fn initialize_gdv_fn_context(malloc_ptr: unsafe extern "C" fn(i64, i32) -> *mut i8, 
+            set_error_msg_ptr: unsafe extern "C" fn(i64, *const i8)) {
+            unsafe {
+                GDV_FN_CONTEXT_ARENA_MALLOC = Some(malloc_ptr);
+                GDV_FN_CONTEXT_SET_ERROR_MSG = Some(set_error_msg_ptr);
+            }
         }
 
         #[cfg(test)]
@@ -61,7 +67,7 @@ fn context_fns_impl() -> proc_macro2::TokenStream {
         #[cfg(test)]
         unsafe fn gdv_fn_context_set_error_msg(_context: i64, error_msg: *const i8) {
             let error_msg_str = std::ffi::CStr::from_ptr(error_msg).to_str().unwrap();
-            println!("Error message: {}", error_msg_str);
+            // eprintln!("Error message: {}", error_msg_str);
         }
 
         #[cfg(test)]
@@ -74,10 +80,22 @@ fn context_fns_impl() -> proc_macro2::TokenStream {
 
         fn return_gdv_string(ctx: i64, result: &str, out_len: *mut i32) -> *mut libc::c_char {
             let result_len = result.len() as i32;
-            let result_ptr = unsafe { gdv_fn_context_arena_malloc(ctx, result_len) };
+            let result_ptr = unsafe {
+                if let Some(context_arena_malloc) = GDV_FN_CONTEXT_ARENA_MALLOC {
+                    context_arena_malloc(ctx, result_len)
+                } else {
+                    eprintln!("GDV_FN_CONTEXT_ARENA_MALLOC is not set");
+                    *out_len = 0;
+                    return std::ptr::null_mut();
+                }
+            };
             if result_ptr.is_null() {
                 unsafe {
-                    gdv_fn_context_set_error_msg(ctx, "Memory allocation failed".as_ptr() as *const libc::c_char);
+                    if let Some(context_set_error_msg) = GDV_FN_CONTEXT_SET_ERROR_MSG {
+                        context_set_error_msg(ctx, "Memory allocation failed".as_ptr() as *const libc::c_char);
+                    } else {
+                        eprintln!("GDV_FN_CONTEXT_SET_ERROR_MSG is not set");
+                    }
                     *out_len = 0;
                 }
                 return std::ptr::null_mut();
