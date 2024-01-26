@@ -18,6 +18,13 @@ mod tests {
             pub extern "C" fn my_udf_() -> f64 {
                 my_udf()
             }
+
+            UDF_REGISTRY.lock().unwrap().push(UdfMetaData {
+                base_name: "my_udf".to_string(),
+                param_types: vec![],
+                return_type: "float64".to_string(),
+                pc_name: "my_udf_".to_string(),
+            });
         };
         let actual = udf_impl(input, false);
         assert_eq!(actual.to_string(), expected.to_string());
@@ -38,6 +45,13 @@ mod tests {
             pub extern "C" fn my_udf_int64(x: i64) -> f64 {
                 my_udf(x)
             }
+
+            UDF_REGISTRY.lock().unwrap().push(UdfMetaData {
+                base_name: "my_udf".to_string(),
+                param_types: vec!["int64".to_string()],
+                return_type: "float64".to_string(),
+                pc_name: "my_udf_int64".to_string(),
+            });
         };
         let actual = udf_impl(input, false);
         assert_eq!(actual.to_string(), expected.to_string());
@@ -58,6 +72,13 @@ mod tests {
             pub extern "C" fn my_udf_int64_int32(x: i64, y: i32) -> f32 {
                 my_udf(x, y)
             }
+
+            UDF_REGISTRY.lock().unwrap().push(UdfMetaData {
+                base_name: "my_udf".to_string(),
+                param_types: vec!["int64".to_string(), "int32".to_string()],
+                return_type: "float32".to_string(),
+                pc_name: "my_udf_int64_int32".to_string(),
+            });
         };
         let actual = udf_impl(input, false);
         assert_eq!(actual.to_string(), expected.to_string());
@@ -80,6 +101,13 @@ mod tests {
                     unsafe { std::slice::from_raw_parts(x as *const u8, x_len as usize) }
                 ).unwrap())
             }
+
+            UDF_REGISTRY.lock().unwrap().push(UdfMetaData {
+                base_name: "my_udf".to_string(),
+                param_types: vec!["utf8".to_string()],
+                return_type: "bool".to_string(),
+                pc_name: "my_udf_utf8".to_string(),
+            });
         };
         let actual = udf_impl(input, false);
         assert_eq!(actual.to_string(), expected.to_string());
@@ -102,6 +130,13 @@ mod tests {
                     unsafe { std::slice::from_raw_parts(x as *const u8, x_len as usize) }
                 ).unwrap())
             }
+
+            UDF_REGISTRY.lock().unwrap().push(UdfMetaData {
+                base_name: "my_udf".to_string(),
+                param_types: vec!["utf8".to_string()],
+                return_type: "bool".to_string(),
+                pc_name: "my_udf_utf8".to_string(),
+            });
         };
         let actual = udf_impl(input, true);
         assert_eq!(actual.to_string(), expected.to_string());
@@ -123,6 +158,13 @@ mod tests {
                 let result = my_udf(x);
                 return_gdv_string(ctx, &result, out_len)
             }
+
+            UDF_REGISTRY.lock().unwrap().push(UdfMetaData {
+                base_name: "my_udf".to_string(),
+                param_types: vec!["int64".to_string()],
+                return_type: "utf8".to_string(),
+                pc_name: "my_udf_int64".to_string(),
+            });
         };
         let actual = udf_impl(input, true);
         assert_eq!(actual.to_string(), expected.to_string());

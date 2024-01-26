@@ -5,6 +5,17 @@ extern crate proc_macro;
 use quote::{format_ident, quote};
 use syn::{parse_macro_input, FnArg, ItemFn, PatType, ReturnType};
 
+struct UdfMetaData {
+    base_name: String,
+    param_types: Vec<String>,
+    return_type: String,
+    pc_name: String,
+}
+
+lazy_static::lazy_static! {
+    static ref UDF_REGISTRY: std::sync::Mutex<Vec<UdfMetaData>> = std::sync::Mutex::new(vec![]);
+}
+
 #[proc_macro_attribute]
 pub fn udf(
     attrs: proc_macro::TokenStream,
@@ -19,6 +30,21 @@ pub fn udf(
 #[proc_macro]
 pub fn context_fns(_input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     context_fns_impl().into()
+}
+
+#[proc_macro]
+pub fn context_initializer(_input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+    let initializer = quote! {
+        #[no_mangle]
+        pub extern "C" fn initialize_gdv_fn_context(malloc_ptr: unsafe extern "C" fn(i64, i32) -> *mut i8, 
+            set_error_msg_ptr: unsafe extern "C" fn(i64, *const i8)) {
+            unsafe {
+                GDV_FN_CONTEXT_ARENA_MALLOC = Some(malloc_ptr);
+                GDV_FN_CONTEXT_SET_ERROR_MSG = Some(set_error_msg_ptr);
+            }
+        }
+    };
+    initializer.into()
 }
 
 fn _extract_needs_context(
@@ -46,15 +72,6 @@ fn context_fns_impl() -> proc_macro2::TokenStream {
     quote! {
         static mut GDV_FN_CONTEXT_ARENA_MALLOC: Option<unsafe extern "C" fn(i64, i32) -> *mut i8> = None;
         static mut GDV_FN_CONTEXT_SET_ERROR_MSG: Option<unsafe extern "C" fn(i64, *const i8)> = None;
-
-        #[no_mangle]
-        pub extern "C" fn initialize_gdv_fn_context(malloc_ptr: unsafe extern "C" fn(i64, i32) -> *mut i8, 
-            set_error_msg_ptr: unsafe extern "C" fn(i64, *const i8)) {
-            unsafe {
-                GDV_FN_CONTEXT_ARENA_MALLOC = Some(malloc_ptr);
-                GDV_FN_CONTEXT_SET_ERROR_MSG = Some(set_error_msg_ptr);
-            }
-        }
 
         #[cfg(test)]
         unsafe fn gdv_fn_context_arena_malloc(_context: i64, size: i32) -> *mut i8 {
@@ -170,7 +187,10 @@ fn udf_impl(input: proc_macro2::TokenStream, needs_context: bool) -> proc_macro2
         }
         ReturnType::Type(_, ty) => {
             // if return type is String, use gandiva context function to allocate memory
-            if quote!(#ty).to_string() == "String" {
+            let return_type_str = quote!(#ty).to_string();
+            let mut return_arrow_type = _map_type(return_type_str.as_str());
+            let wrapper_func = if return_type_str == "String" {
+                return_arrow_type = "utf8".to_string();
                 wrapper_args.push(quote! { out_len: *mut i32 });
                 quote! {
                     // output the original function
@@ -192,6 +212,26 @@ fn udf_impl(input: proc_macro2::TokenStream, needs_context: bool) -> proc_macro2
                         #function_name(#(#call_args),*)
                     }
                 }
+            };
+
+            let arg_types_quotes = arg_types.iter().map(|arg_type| {
+                quote! {#arg_type.to_string()}
+            });
+            let base_name_str = function_name.to_string();
+            let pc_name_str = wrapper_name.to_string();
+            // register the wrapper function metadata
+            let register_func_meta = quote! {
+                UDF_REGISTRY.lock().unwrap().push(UdfMetaData {
+                    base_name: #base_name_str.to_string(),
+                    param_types: vec![#(#arg_types_quotes),*],
+                    return_type: #return_arrow_type.to_string(),
+                    pc_name: #pc_name_str.to_string(),
+                });
+            };
+
+            quote! {
+                #wrapper_func
+                #register_func_meta
             }
         }
     };
