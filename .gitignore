@@ -1,4 +1,4 @@
 /target
-/Cargo.lock
+/gandiva_rust_udf_macro/Cargo.lock
 .gitignore
 .idea/*
