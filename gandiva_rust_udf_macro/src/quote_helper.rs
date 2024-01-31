@@ -119,3 +119,23 @@ pub(crate) fn process_arg(PatType { ty, pat, .. }: &PatType,
     }
     arg_types.push(mapped_gdv_arg_type);
 }
+
+pub(crate) fn load_registered_udfs_quote(function: syn::ItemFn) -> proc_macro2::TokenStream {
+    let registry_function_name = &function.sig.ident;
+
+    quote! {
+        #function
+
+        #[no_mangle]
+        pub extern "C" fn load_registered_udfs() -> *mut libc::c_char {
+            #registry_function_name();
+            let registry_c_str = gandiva_rust_udf_shared::get_udf_registry();
+            registry_c_str
+        }
+
+        #[no_mangle]
+        pub extern "C" fn finish_loading_registered_udfs(registry: *mut libc::c_char) {
+            gandiva_rust_udf_shared::free_udf_registry(registry);
+        }
+    }
+}

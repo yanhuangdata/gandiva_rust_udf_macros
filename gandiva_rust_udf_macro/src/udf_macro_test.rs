@@ -1,6 +1,7 @@
 #[cfg(test)]
 mod tests {
     use crate::udf_impl;
+    use crate::udf_registry_impl;
 
     #[test]
     fn test_no_arg_udf() {
@@ -219,6 +220,32 @@ mod tests {
             }
         };
         let actual = udf_impl(input, true);
+        assert_eq!(actual.to_string(), expected.to_string());
+    }
+
+    #[test]
+    fn test_udf_registry_macro() {
+        let input: proc_macro2::TokenStream = quote::quote! {
+            pub fn register_all_udfs() {
+            }
+        };
+
+        let expected: proc_macro2::TokenStream = quote::quote! {
+            #input
+
+            #[no_mangle]
+            pub extern "C" fn load_registered_udfs() -> *mut libc::c_char {
+                register_all_udfs();
+                let registry_c_str = gandiva_rust_udf_shared::get_udf_registry();
+                registry_c_str
+            }
+
+            #[no_mangle]
+            pub extern "C" fn finish_loading_registered_udfs(registry: *mut libc::c_char) {
+                gandiva_rust_udf_shared::free_udf_registry(registry);
+            }
+        };
+        let actual = udf_registry_impl(input);
         assert_eq!(actual.to_string(), expected.to_string());
     }
 }

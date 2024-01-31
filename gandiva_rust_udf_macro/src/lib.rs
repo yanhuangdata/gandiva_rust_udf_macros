@@ -6,11 +6,20 @@ mod attr_parser;
 extern crate proc_macro;
 
 use quote::{format_ident, quote};
-use syn::{FnArg, PatType, ReturnType};
+use syn::{FnArg, ReturnType};
 use crate::type_mapping::map_type;
 use crate::quote_helper::{is_returning_string, string_function_wrapper_quote, function_wrapper_quote,
-                          register_func_meta_quote, process_arg};
+                          register_func_meta_quote, process_arg, load_registered_udfs_quote};
 use crate::attr_parser::{extract_needs_context, extract_params};
+
+#[proc_macro_attribute]
+pub fn udf_registry(
+    _attrs: proc_macro::TokenStream,
+    input: proc_macro::TokenStream,
+) -> proc_macro::TokenStream {
+    let input = proc_macro2::TokenStream::from(input);
+    udf_registry_impl(input).into()
+}
 
 #[proc_macro_attribute]
 pub fn udf(
@@ -76,4 +85,9 @@ fn udf_impl(input: proc_macro2::TokenStream, mut needs_context: bool) -> proc_ma
     };
 
     expanded
+}
+
+fn udf_registry_impl(input: proc_macro2::TokenStream) -> proc_macro2::TokenStream {
+    let function = extract_params(input);
+    load_registered_udfs_quote(function).into()
 }
