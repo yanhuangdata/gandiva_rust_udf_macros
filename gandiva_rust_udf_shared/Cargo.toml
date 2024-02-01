@@ -8,7 +8,6 @@ documentation = "https://github.com/yanhuangdata/gandiva_rust_udf_macros"
 readme = "README.md"
 homepage = "https://github.com/yanhuangdata/gandiva_rust_udf_macros"
 repository = "https://github.com/yanhuangdata/gandiva_rust_udf_macros"
-license = "Apache License 2.0"
 license-file = "LICENSE"
 
 [workspace]
