@@ -2,6 +2,16 @@
 name = "gandiva_rust_udf_shared"
 version = "0.1.0"
 edition = "2021"
+authors = ["yanhuangdata"]
+description = "A basic shared library for gandiva rust udf"
+documentation = "https://github.com/yanhuangdata/gandiva_rust_udf_macros"
+readme = "README.md"
+homepage = "https://github.com/yanhuangdata/gandiva_rust_udf_macros"
+repository = "https://github.com/yanhuangdata/gandiva_rust_udf_macros"
+license-file = "LICENSE"
+
+[workspace]
+resolver = "1"
 
 [dependencies]
 lazy_static = { version = "1.4.0", features = [] }
