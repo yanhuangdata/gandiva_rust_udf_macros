@@ -42,5 +42,3 @@ jobs:
         TARGET_RUSTFLAGS: ${{ matrix.target_rustflags }}
       run: ./ci/scripts/build.sh
       shell: bash
-      run: ./ci/scripts/build.sh
-      shell: bash
