@@ -2,10 +2,6 @@
 
 set -euxo pipefail
 
-VERSION=${REF#"refs/tags/"}
-
-echo "Packaging $VERSION for $TARGET..."
-
 echo "Installing rust toolchain for $TARGET..."
 rustup target add $TARGET
 
