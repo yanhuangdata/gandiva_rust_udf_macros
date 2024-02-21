@@ -91,11 +91,11 @@ pub fn return_gdv_string(ctx: i64, result: &str, out_len: *mut i32) -> *mut libc
             *out_len = 0;
             return std::ptr::null_mut();
         }
-    };
+    } as *mut libc::c_char;
     if result_ptr.is_null() {
         unsafe {
             if let Some(context_set_error_msg) = GDV_FN_CONTEXT_SET_ERROR_MSG {
-                context_set_error_msg(ctx, "Memory allocation failed".as_ptr() as *const libc::c_char);
+                context_set_error_msg(ctx, "Memory allocation failed".as_ptr() as *const i8);
             } else {
                 eprintln!("GDV_FN_CONTEXT_SET_ERROR_MSG is not set");
             }
