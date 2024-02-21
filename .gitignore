@@ -3,3 +3,4 @@
 .gitignore
 .idea/*
 target
+Cargo.lock
