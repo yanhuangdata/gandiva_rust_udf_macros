@@ -1,8 +1,9 @@
-mod shared_api_test;
+mod type_mapping;
+pub mod udf_registry_generator;
 
-use std::ffi::CString;
 use lazy_static::lazy_static;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
+use std::ffi::CString;
 
 #[allow(dead_code)]
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -66,12 +67,15 @@ pub struct UdfRegistry {
     pub functions: Vec<UdfMetaData>,
 }
 
-pub static mut GDV_FN_CONTEXT_ARENA_MALLOC: Option<unsafe extern "C" fn(i64, i32) -> *mut i8> = None;
+pub static mut GDV_FN_CONTEXT_ARENA_MALLOC: Option<unsafe extern "C" fn(i64, i32) -> *mut i8> =
+    None;
 pub static mut GDV_FN_CONTEXT_SET_ERROR_MSG: Option<unsafe extern "C" fn(i64, *const i8)> = None;
 
 #[no_mangle]
-pub extern "C" fn initialize_gdv_fn_context(malloc_ptr: unsafe extern "C" fn(i64, i32) -> *mut i8,
-                                            set_error_msg_ptr: unsafe extern "C" fn(i64, *const i8)) {
+pub extern "C" fn initialize_gdv_fn_context(
+    malloc_ptr: unsafe extern "C" fn(i64, i32) -> *mut i8,
+    set_error_msg_ptr: unsafe extern "C" fn(i64, *const i8),
+) {
     unsafe {
         GDV_FN_CONTEXT_ARENA_MALLOC = Some(malloc_ptr);
         GDV_FN_CONTEXT_SET_ERROR_MSG = Some(set_error_msg_ptr);
@@ -104,7 +108,11 @@ pub fn return_gdv_string(ctx: i64, result: &str, out_len: *mut i32) -> *mut libc
         return std::ptr::null_mut();
     }
     unsafe {
-        std::ptr::copy_nonoverlapping(result.as_ptr() as *const u8, result_ptr as *mut u8, result_len as usize);
+        std::ptr::copy_nonoverlapping(
+            result.as_ptr() as *const u8,
+            result_ptr as *mut u8,
+            result_len as usize,
+        );
         *out_len = result_len;
     }
     result_ptr

@@ -1,7 +1,9 @@
 #[cfg(test)]
 mod tests {
-    use crate::{UdfRegistry, UdfMetaData, DataType, UDF_REGISTRY, register_udf, get_udf_registry,
-                free_udf_registry, initialize_gdv_fn_context, return_gdv_string};
+    use gandiva_rust_udf_shared::{
+        free_udf_registry, get_udf_registry, initialize_gdv_fn_context, register_udf,
+        return_gdv_string, DataType, UdfMetaData, UdfRegistry, UDF_REGISTRY,
+    };
 
     // function used for unit testing purpose
     extern "C" fn gdv_fn_context_arena_malloc(_context: i64, size: i32) -> *mut i8 {
@@ -21,8 +23,14 @@ mod tests {
     fn _get_udf_meta() -> UdfMetaData {
         UdfMetaData {
             name: "my_udf".to_string(),
-            param_types: vec![DataType { type_name: "utf8".to_string(), ..Default::default() }],
-            return_type: DataType { type_name: "boolean".to_string(), ..Default::default() },
+            param_types: vec![DataType {
+                type_name: "utf8".to_string(),
+                ..Default::default()
+            }],
+            return_type: DataType {
+                type_name: "boolean".to_string(),
+                ..Default::default()
+            },
             pc_name: "my_udf_utf8".to_string(),
             ..Default::default()
         }
