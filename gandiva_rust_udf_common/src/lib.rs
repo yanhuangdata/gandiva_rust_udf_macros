@@ -14,5 +14,6 @@ pub fn map_type(arg_type: &str) -> String {
         "f32" => "float32",
         "f64" => "float64",
         _ => arg_type,
-    }.to_string()
+    }
+    .to_string()
 }

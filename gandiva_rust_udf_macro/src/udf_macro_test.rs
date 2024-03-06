@@ -1,7 +1,19 @@
 #[cfg(test)]
-mod tests {
+mod macro_tests {
     use crate::udf_impl;
     use crate::udf_registry_impl;
+    use default_args::default_args;
+
+    default_args! {
+        fn gen_udf(
+            input: proc_macro2::TokenStream,
+            name: Option<String> = None,
+            aliases: Vec<String> = Vec::new(),
+            needs_context: bool = false
+        ) -> proc_macro2::TokenStream {
+            udf_impl(input, name, aliases, needs_context)
+        }
+    }
 
     #[test]
     fn test_no_arg_udf() {
@@ -22,6 +34,7 @@ mod tests {
             pub fn register_my_udf_() {
                 gandiva_rust_udf_shared::register_udf(gandiva_rust_udf_shared::UdfMetaData {
                     name: "my_udf".to_string(),
+                    aliases: vec![],
                     param_types: vec![],
                     return_type: gandiva_rust_udf_shared::DataType { type_name: "float64".to_string(), ..Default::default() },
                     pc_name: "my_udf_".to_string(),
@@ -29,7 +42,7 @@ mod tests {
                 });
             }
         };
-        let actual = udf_impl(input, false);
+        let actual = gen_udf!(input);
         assert_eq!(actual.to_string(), expected.to_string());
     }
 
@@ -52,6 +65,7 @@ mod tests {
             pub fn register_my_udf_int64() {
                 gandiva_rust_udf_shared::register_udf(gandiva_rust_udf_shared::UdfMetaData {
                     name: "my_udf".to_string(),
+                    aliases: vec![],
                     param_types: vec![gandiva_rust_udf_shared::DataType { type_name: "int64".to_string(), ..Default::default() }],
                     return_type: gandiva_rust_udf_shared::DataType { type_name: "float64".to_string(), ..Default::default() },
                     pc_name: "my_udf_int64".to_string(),
@@ -59,7 +73,7 @@ mod tests {
                 });
             }
         };
-        let actual = udf_impl(input, false);
+        let actual = gen_udf!(input);
         assert_eq!(actual.to_string(), expected.to_string());
     }
 
@@ -82,6 +96,7 @@ mod tests {
             pub fn register_my_udf_boolean() {
                 gandiva_rust_udf_shared::register_udf(gandiva_rust_udf_shared::UdfMetaData {
                     name: "my_udf".to_string(),
+                    aliases: vec![],
                     param_types: vec![gandiva_rust_udf_shared::DataType { type_name: "boolean".to_string(), ..Default::default() }],
                     return_type: gandiva_rust_udf_shared::DataType { type_name: "boolean".to_string(), ..Default::default() },
                     pc_name: "my_udf_boolean".to_string(),
@@ -89,7 +104,7 @@ mod tests {
                 });
             }
         };
-        let actual = udf_impl(input, false);
+        let actual = gen_udf!(input);
         assert_eq!(actual.to_string(), expected.to_string());
     }
 
@@ -112,6 +127,7 @@ mod tests {
             pub fn register_my_udf_int64_int32() {
                 gandiva_rust_udf_shared::register_udf(gandiva_rust_udf_shared::UdfMetaData {
                     name: "my_udf".to_string(),
+                    aliases: vec![],
                     param_types: vec![
                         gandiva_rust_udf_shared::DataType { type_name: "int64".to_string(), ..Default::default() },
                         gandiva_rust_udf_shared::DataType { type_name: "int32".to_string(), ..Default::default() }
@@ -122,7 +138,7 @@ mod tests {
                 });
             }
         };
-        let actual = udf_impl(input, false);
+        let actual = gen_udf!(input);
         assert_eq!(actual.to_string(), expected.to_string());
     }
 
@@ -147,6 +163,7 @@ mod tests {
             pub fn register_my_udf_utf8() {
                 gandiva_rust_udf_shared::register_udf(gandiva_rust_udf_shared::UdfMetaData {
                     name: "my_udf".to_string(),
+                    aliases: vec![],
                     param_types: vec![gandiva_rust_udf_shared::DataType { type_name: "utf8".to_string(), ..Default::default() }],
                     return_type: gandiva_rust_udf_shared::DataType { type_name: "boolean".to_string(), ..Default::default() },
                     pc_name: "my_udf_utf8".to_string(),
@@ -154,7 +171,7 @@ mod tests {
                 });
             }
         };
-        let actual = udf_impl(input, false);
+        let actual = gen_udf!(input);
         assert_eq!(actual.to_string(), expected.to_string());
     }
 
@@ -179,6 +196,7 @@ mod tests {
             pub fn register_my_udf_utf8() {
                 gandiva_rust_udf_shared::register_udf(gandiva_rust_udf_shared::UdfMetaData {
                     name: "my_udf".to_string(),
+                    aliases: vec![],
                     param_types: vec![gandiva_rust_udf_shared::DataType { type_name: "utf8".to_string(), ..Default::default() }],
                     return_type: gandiva_rust_udf_shared::DataType { type_name: "boolean".to_string(), ..Default::default() },
                     pc_name: "my_udf_utf8".to_string(),
@@ -187,7 +205,7 @@ mod tests {
                 });
             }
         };
-        let actual = udf_impl(input, true);
+        let actual = gen_udf!(input);
         assert_eq!(actual.to_string(), expected.to_string());
     }
 
@@ -211,6 +229,7 @@ mod tests {
             pub fn register_my_udf_int64() {
                 gandiva_rust_udf_shared::register_udf(gandiva_rust_udf_shared::UdfMetaData {
                     name: "my_udf".to_string(),
+                    aliases: vec![],
                     param_types: vec![gandiva_rust_udf_shared::DataType { type_name: "int64".to_string(), ..Default::default() }],
                     return_type: gandiva_rust_udf_shared::DataType { type_name: "utf8".to_string(), ..Default::default() },
                     pc_name: "my_udf_int64".to_string(),
@@ -219,7 +238,7 @@ mod tests {
                 });
             }
         };
-        let actual = udf_impl(input, true);
+        let actual = gen_udf!(input);
         assert_eq!(actual.to_string(), expected.to_string());
     }
 

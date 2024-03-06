@@ -21,3 +21,6 @@ quote = "1.0.28"
 syn = { version = "2.0.18", features = ["full"] }
 gandiva_rust_udf_common = "0.1.0"
 gandiva_rust_udf_shared = "0.1.2"
+
+[dev-dependencies]
+default-args = "1.0.0"
