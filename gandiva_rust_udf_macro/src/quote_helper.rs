@@ -21,6 +21,14 @@ fn _needs_context_quote(needs_context: bool) -> proc_macro2::TokenStream {
     }
 }
 
+fn _result_nullable_quote(result_nullable: Option<String>) -> proc_macro2::TokenStream {
+    if let Some(result_nullable) = result_nullable {
+        quote! { result_nullable: #result_nullable.to_string(), }
+    } else {
+        quote! {}
+    }
+}
+
 pub(crate) fn string_function_wrapper_quote(
     function: &syn::ItemFn,
     wrapper_name: &Ident,
@@ -66,15 +74,19 @@ pub(crate) fn register_func_meta_quote(
     name: Option<String>,
     aliases: Vec<String>,
     needs_context: bool,
+    result_nullable: Option<String>,
     return_arrow_type: &str,
 ) -> proc_macro2::TokenStream {
     let base_name_str = function_name.to_string();
     let arg_types_quotes = arg_types.iter().map(|arg_type| _data_type_quote(arg_type));
+    let aliases_quotes = aliases.iter().map(|alias| quote! { #alias.to_string() });
     let pc_name_str = wrapper_name.to_string();
     // register the wrapper function metadata
     let register_func_ident = format_ident!("register_{}", wrapper_name);
     let return_type_quote = _data_type_quote(return_arrow_type);
     let udf_name = name.unwrap_or(base_name_str.clone());
+
+    let result_nullable_quote = _result_nullable_quote(result_nullable);
 
     // conditionally add needs_context
     let needs_context_quote = _needs_context_quote(needs_context);
@@ -82,10 +94,11 @@ pub(crate) fn register_func_meta_quote(
         pub fn #register_func_ident() {
             gandiva_rust_udf_shared::register_udf(gandiva_rust_udf_shared::UdfMetaData {
                 name: #udf_name.to_string(),
-                aliases: vec![#(#aliases),*],
+                aliases: vec![#(#aliases_quotes),*],
                 param_types: vec![#(#arg_types_quotes),*],
                 return_type: #return_type_quote,
                 pc_name: #pc_name_str.to_string(),
+                #result_nullable_quote
                 #needs_context_quote
                 ..Default::default()
             });
