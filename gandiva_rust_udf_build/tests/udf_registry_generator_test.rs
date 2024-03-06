@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use gandiva_rust_udf_shared::udf_registry_generator::generate_udf_registry_and_dependencies;
+    use gandiva_rust_udf_build::generate_udf_registry_and_dependencies;
     use std::path::PathBuf;
 
     fn scan_dir(dir: &str) -> PathBuf {

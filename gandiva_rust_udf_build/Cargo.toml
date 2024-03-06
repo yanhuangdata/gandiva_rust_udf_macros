@@ -1,6 +1,6 @@
 [package]
-name = "gandiva_rust_udf_shared"
-version = "0.1.2"
+name = "gandiva_rust_udf_build"
+version = "0.1.0"
 edition = "2021"
 authors = ["yanhuangdata"]
 description = "A basic shared library for gandiva rust udf"
@@ -21,4 +21,6 @@ quote = "1.0.28"
 proc-macro2 = "1.0.78"
 toml = "0.8.10"
 strfmt = "0.2.4"
+gandiva_rust_udf_macro = { path = "../gandiva_rust_udf_macro" }
 gandiva_rust_udf_type = { path = "../gandiva_rust_udf_type" }
+gandiva_rust_udf_shared = { path = "../gandiva_rust_udf_shared" }

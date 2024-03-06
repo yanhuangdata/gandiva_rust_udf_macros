@@ -9,19 +9,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5443807d6dff69373d433ab9ef5378ad8df50ca6298caf15de6e52e24aaf54d5"
 
 [[package]]
-name = "gandiva_rust_udf_macro"
-version = "0.1.1"
+name = "gandiva_rust_udf_build"
+version = "0.1.0"
 dependencies = [
+ "gandiva_rust_udf_macro",
  "gandiva_rust_udf_shared",
- "proc-macro2",
- "quote",
- "syn",
-]
-
-[[package]]
-name = "gandiva_rust_udf_shared"
-version = "0.1.1"
-dependencies = [
+ "gandiva_rust_udf_type",
  "lazy_static",
  "libc",
  "proc-macro2",
@@ -33,6 +26,38 @@ dependencies = [
  "toml",
  "walkdir",
 ]
+
+[[package]]
+name = "gandiva_rust_udf_macro"
+version = "0.1.2"
+dependencies = [
+ "gandiva_rust_udf_shared",
+ "gandiva_rust_udf_type",
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
+name = "gandiva_rust_udf_shared"
+version = "0.1.2"
+dependencies = [
+ "gandiva_rust_udf_type",
+ "lazy_static",
+ "libc",
+ "proc-macro2",
+ "quote",
+ "serde",
+ "serde_json",
+ "strfmt",
+ "syn",
+ "toml",
+ "walkdir",
+]
+
+[[package]]
+name = "gandiva_rust_udf_type"
+version = "0.1.0"
 
 [[package]]
 name = "hashbrown"

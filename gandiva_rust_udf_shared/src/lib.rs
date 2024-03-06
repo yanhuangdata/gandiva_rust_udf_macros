@@ -1,9 +1,8 @@
-mod type_mapping;
-pub mod udf_registry_generator;
-
 use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
 use std::ffi::CString;
+
+pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 #[allow(dead_code)]
 #[derive(Serialize, Deserialize, Debug, Clone)]

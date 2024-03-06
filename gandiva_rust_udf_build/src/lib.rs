@@ -1,5 +1,8 @@
+extern crate gandiva_rust_udf_shared;
+extern crate gandiva_rust_udf_macro;
+
 use std::collections::HashMap;
-use crate::type_mapping::map_type;
+use gandiva_rust_udf_type::map_type;
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
 use std::fs;
@@ -180,40 +183,60 @@ mod tests {{
 
 const CARGO_TOML_TEMPLATE: &str = r#"
 [package]
-name = "udf_core"
-version = "0.1.1"
+name = "udf_registry"
+version = "{RELEASE_VER}"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [lib]
-name = "gandiva_rust_udf"
+name = "{LIB_NAME}"
 crate-type = ["cdylib"]
 path = "src/lib.rs"
 
 [dependencies]
 libc = "0.2.152"
-gandiva_rust_udf_macro = {{ path = "../../gandiva_rust_udf_macros/gandiva_rust_udf_macro" }}
-gandiva_rust_udf_shared = {{ path = "../../gandiva_rust_udf_macros/gandiva_rust_udf_shared" }}
+gandiva_rust_udf_macro = "{GDV_RUST_UDF_MACRO_VER}"
+gandiva_rust_udf_shared = "{GDV_RUST_UDF_SHARED_VER}"
 {GENERATED_UDF_DEPENDENCIES}
 
 [dev-dependencies]
 serde_json = "1.0.111"
-
-[build-dependencies]
-gandiva_rust_udf_macro = {{ path = "../../gandiva_rust_udf_macros/gandiva_rust_udf_macro" }}
-gandiva_rust_udf_shared = {{ path = "../../gandiva_rust_udf_macros/gandiva_rust_udf_shared" }}
-strfmt = "0.2.4"
 "#;
 
-pub fn generate_udf_core_pack(root_dir: &Path) {
-    let base_path = root_dir.join("udf_core");
+fn _get_udf_registry_build_metas(path: &Path) -> HashMap<String, String> {
+    let mut ret: HashMap<String, String> = HashMap::new();
+    let cargo_toml_path = path.join("Cargo.toml");
+    if path.is_dir() && cargo_toml_path.exists() {
+        // found a Cargo.toml, which may be a workspace for UDF
+        let cargo_toml_contents =
+            fs::read_to_string(cargo_toml_path).expect("Failed to read Cargo.toml");
+        let cargo_toml: Value = cargo_toml_contents
+            .parse()
+            .expect("Failed to parse Cargo.toml");
+        if let Some(package) = cargo_toml.get("package").and_then(|pkg| pkg.get("name")) {
+            if let Some(lib_name) = package.as_str() {
+                ret.insert("LIB_NAME".to_string(), lib_name.to_string());
+            }
+        }
+        if let Some(package) = cargo_toml.get("package").and_then(|pkg| pkg.get("version")) {
+            if let Some(version) = package.as_str() {
+                ret.insert("RELEASE_VER".to_string(), version.to_string());
+            }
+        }
+    }
+    ret
+}
+
+gandiva_rust_udf_macro::get_version!();
+
+pub fn generate_udf_registry(root_dir: &Path) {
+    let base_path = root_dir.join("udf_registry");
     let lib_path = base_path.join("src").join("lib.rs");
     match fs::create_dir_all(lib_path.parent().unwrap()) {
         Ok(_) => println!("mkdir src done"),
         Err(e) => println!("failed to mkdir src: {:?}", e),
     }
 
-    // let udf_registry_code = generate_udf_registry(base_path.parent().unwrap());
     let (udf_registry_code, udf_dependencies_code) = generate_udf_registry_and_dependencies(base_path.parent().unwrap());
 
     // to generate src/lib.rs
@@ -229,10 +252,9 @@ pub fn generate_udf_core_pack(root_dir: &Path) {
 
     // to generate Cargo.toml
     let cargo_path = base_path.join("Cargo.toml");
-    let mut cargo_tml_vars: HashMap<String, String> = HashMap::new();
-    cargo_tml_vars.insert("RELEASE_VER".to_string(), "0.2.0".to_string());
-    cargo_tml_vars.insert("GDV_RUST_UDF_MACRO_VER".to_string(), "0.1.1".to_string());
-    cargo_tml_vars.insert("GDV_RUST_UDF_SHARED_VER".to_string(), "0.1.1".to_string());
+    let mut cargo_tml_vars = _get_udf_registry_build_metas(root_dir);
+    cargo_tml_vars.insert("GDV_RUST_UDF_MACRO_VER".to_string(), get_macro_version());
+    cargo_tml_vars.insert("GDV_RUST_UDF_SHARED_VER".to_string(), gandiva_rust_udf_shared::VERSION.to_string());
     cargo_tml_vars.insert("GENERATED_UDF_DEPENDENCIES".to_string(), udf_dependencies_code.to_string());
     match strfmt(CARGO_TOML_TEMPLATE, &cargo_tml_vars) {
         Ok(result) => fs::write(&cargo_path, result).expect("failed to write to Cargo.toml"),
