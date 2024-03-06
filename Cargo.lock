@@ -12,7 +12,7 @@ checksum = "5443807d6dff69373d433ab9ef5378ad8df50ca6298caf15de6e52e24aaf54d5"
 name = "gandiva_rust_udf_macro"
 version = "0.1.1"
 dependencies = [
- "gandiva_rust_udf_shared 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "gandiva_rust_udf_shared",
  "proc-macro2",
  "quote",
  "syn",
@@ -28,21 +28,10 @@ dependencies = [
  "quote",
  "serde",
  "serde_json",
+ "strfmt",
  "syn",
  "toml",
  "walkdir",
-]
-
-[[package]]
-name = "gandiva_rust_udf_shared"
-version = "0.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4aff358cd00bf534479c007ae97067d1560711c4fee8a4fac87fb07dec8a360b"
-dependencies = [
- "lazy_static",
- "libc",
- "serde",
- "serde_json",
 ]
 
 [[package]]
@@ -157,6 +146,12 @@ checksum = "eb3622f419d1296904700073ea6cc23ad690adbd66f13ea683df73298736f0c1"
 dependencies = [
  "serde",
 ]
+
+[[package]]
+name = "strfmt"
+version = "0.2.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7a8348af2d9fc3258c8733b8d9d8db2e56f54b2363a4b5b81585c7875ed65e65"
 
 [[package]]
 name = "syn"

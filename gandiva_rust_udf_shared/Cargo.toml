@@ -20,3 +20,4 @@ syn = { version = "2.0.18", features = ["full", "visit", "visit-mut"] }
 quote = "1.0.28"
 proc-macro2 = "1.0.78"
 toml = "0.8.10"
+strfmt = "0.2.4"

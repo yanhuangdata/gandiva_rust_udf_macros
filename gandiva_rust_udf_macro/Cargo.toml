@@ -19,4 +19,5 @@ proc-macro = true
 proc-macro2 = "1.0.78"
 quote = "1.0.28"
 syn = { version = "2.0.18", features = ["full"] }
-gandiva_rust_udf_shared = { version = "0.1.1" }
+gandiva_rust_udf_shared = { path = "../gandiva_rust_udf_shared" }
+# gandiva_rust_udf_shared = { version = "0.1.1" }
