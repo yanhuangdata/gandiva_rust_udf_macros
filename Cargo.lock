@@ -14,7 +14,7 @@ version = "0.1.0"
 dependencies = [
  "gandiva_rust_udf_macro",
  "gandiva_rust_udf_shared",
- "gandiva_rust_udf_type",
+ "gandiva_rust_udf_common",
  "lazy_static",
  "libc",
  "proc-macro2",
@@ -32,7 +32,7 @@ name = "gandiva_rust_udf_macro"
 version = "0.1.2"
 dependencies = [
  "gandiva_rust_udf_shared",
- "gandiva_rust_udf_type",
+ "gandiva_rust_udf_common",
  "proc-macro2",
  "quote",
  "syn",
@@ -42,7 +42,7 @@ dependencies = [
 name = "gandiva_rust_udf_shared"
 version = "0.1.2"
 dependencies = [
- "gandiva_rust_udf_type",
+ "gandiva_rust_udf_common",
  "lazy_static",
  "libc",
  "proc-macro2",
@@ -56,7 +56,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "gandiva_rust_udf_type"
+name = "gandiva_rust_udf_common"
 version = "0.1.0"
 
 [[package]]

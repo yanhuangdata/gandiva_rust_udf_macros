@@ -1,7 +1,7 @@
 use proc_macro2::Ident;
 use quote::{format_ident, quote};
 use syn::{PatType, ReturnType, Type};
-use gandiva_rust_udf_type::map_type;
+use gandiva_rust_udf_common::map_type;
 
 fn _data_type_quote(type_name: &str) -> proc_macro2::TokenStream {
     quote! {
