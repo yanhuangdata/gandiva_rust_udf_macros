@@ -1,4 +1,3 @@
-use crate::type_mapping::map_type;
 use proc_macro2::Ident;
 use quote::{format_ident, quote};
 use syn::{PatType, ReturnType, Type};

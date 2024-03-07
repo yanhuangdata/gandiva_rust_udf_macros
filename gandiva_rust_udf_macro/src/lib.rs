@@ -1,6 +1,3 @@
-mod attr_parser;
-mod quote_helper;
-mod type_mapping;
 mod udf_macro_test;
 mod quote_helper;
 mod attr_parser;
@@ -12,7 +9,6 @@ use crate::quote_helper::{
     function_wrapper_quote, is_returning_string, load_registered_udfs_quote, process_arg,
     register_func_meta_quote, string_function_wrapper_quote,
 };
-use crate::type_mapping::map_type;
 use quote::{format_ident, quote};
 use syn::{FnArg, ReturnType};
 use gandiva_rust_udf_common::map_type;
