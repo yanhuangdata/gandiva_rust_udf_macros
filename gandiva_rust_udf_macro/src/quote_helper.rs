@@ -16,15 +16,32 @@ fn _needs_context_quote(needs_context: bool) -> proc_macro2::TokenStream {
     if needs_context {
         quote! { needs_context: true, }
     } else {
-        quote! { }
+        quote! {}
     }
 }
 
-pub(crate) fn string_function_wrapper_quote(function: &syn::ItemFn,
-                                            wrapper_name: &Ident,
-                                            wrapper_args: &mut Vec<proc_macro2::TokenStream>,
-                                            function_name: &Ident,
-                                            call_args: &mut Vec<proc_macro2::TokenStream>,
+fn _can_return_errors_quote(can_return_errors: bool) -> proc_macro2::TokenStream {
+    if can_return_errors {
+        quote! { can_return_errors: true, }
+    } else {
+        quote! {}
+    }
+}
+
+fn _result_nullable_quote(result_nullable: Option<String>) -> proc_macro2::TokenStream {
+    if let Some(result_nullable) = result_nullable {
+        quote! { result_nullable: #result_nullable.to_string(), }
+    } else {
+        quote! {}
+    }
+}
+
+pub(crate) fn string_function_wrapper_quote(
+    function: &syn::ItemFn,
+    wrapper_name: &Ident,
+    wrapper_args: &mut Vec<proc_macro2::TokenStream>,
+    function_name: &Ident,
+    call_args: &mut Vec<proc_macro2::TokenStream>,
 ) -> proc_macro2::TokenStream {
     quote! {
         // output the original function
@@ -38,12 +55,14 @@ pub(crate) fn string_function_wrapper_quote(function: &syn::ItemFn,
     }
 }
 
-pub(crate) fn function_wrapper_quote(function: &syn::ItemFn,
-                                     wrapper_name: &Ident,
-                                     wrapper_args: &mut Vec<proc_macro2::TokenStream>,
-                                     function_name: &Ident,
-                                     call_args: &mut Vec<proc_macro2::TokenStream>,
-                                     ty: &Box<Type>) -> proc_macro2::TokenStream {
+pub(crate) fn function_wrapper_quote(
+    function: &syn::ItemFn,
+    wrapper_name: &Ident,
+    wrapper_args: &mut Vec<proc_macro2::TokenStream>,
+    function_name: &Ident,
+    call_args: &mut Vec<proc_macro2::TokenStream>,
+    ty: &Box<Type>,
+) -> proc_macro2::TokenStream {
     quote! {
       // output the original function
       #function
@@ -55,29 +74,46 @@ pub(crate) fn function_wrapper_quote(function: &syn::ItemFn,
     }
 }
 
-pub(crate) fn register_func_meta_quote(function_name: &Ident, arg_types: &Vec<String>,
-                                       wrapper_name: &Ident, needs_context: bool,
-                                       return_arrow_type: &str) -> proc_macro2::TokenStream {
+pub(crate) fn register_func_meta_quote(
+    function_name: &Ident,
+    arg_types: &Vec<String>,
+    wrapper_name: &Ident,
+    name: Option<String>,
+    aliases: Vec<String>,
+    needs_context: bool,
+    can_return_errors: bool,
+    result_nullable: Option<String>,
+    return_arrow_type: &str,
+) -> proc_macro2::TokenStream {
     let base_name_str = function_name.to_string();
-    let arg_types_quotes = arg_types.iter().map(|arg_type| { _data_type_quote(arg_type) });
+    let arg_types_quotes = arg_types.iter().map(|arg_type| _data_type_quote(arg_type));
+    let aliases_quotes = aliases.iter().map(|alias| quote! { #alias.to_string() });
     let pc_name_str = wrapper_name.to_string();
     // register the wrapper function metadata
     let register_func_ident = format_ident!("register_{}", wrapper_name);
     let return_type_quote = _data_type_quote(return_arrow_type);
+    let udf_name = name.unwrap_or(base_name_str.clone());
+
+    let result_nullable_quote = _result_nullable_quote(result_nullable);
+
     // conditionally add needs_context
     let needs_context_quote = _needs_context_quote(needs_context);
+    let can_return_errors_quote = _can_return_errors_quote(can_return_errors);
     let register_func_meta = quote! {
-                pub fn #register_func_ident() {
-                    gandiva_rust_udf_shared::register_udf(gandiva_rust_udf_shared::UdfMetaData {
-                        name: #base_name_str.to_string(),
-                        param_types: vec![#(#arg_types_quotes),*],
-                        return_type: #return_type_quote,
-                        pc_name: #pc_name_str.to_string(),
-                        #needs_context_quote
-                        ..Default::default()
-                    });
-                }
-            };
+        pub fn #register_func_ident() {
+            gandiva_rust_udf_shared::register_udf(gandiva_rust_udf_shared::UdfMetaData {
+                name: #udf_name.to_string(),
+                aliases: vec![#(#aliases_quotes),*],
+                param_types: vec![#(#arg_types_quotes),*],
+                return_type: #return_type_quote,
+                pc_name: #pc_name_str.to_string(),
+                #result_nullable_quote
+                #needs_context_quote
+                #can_return_errors_quote
+                ..Default::default()
+            });
+        }
+    };
     register_func_meta
 }
 
@@ -97,10 +133,12 @@ pub(crate) fn is_returning_string(return_type: &ReturnType) -> bool {
     false
 }
 
-pub(crate) fn process_arg(PatType { ty, pat, .. }: &PatType,
-                          wrapper_args: &mut Vec<proc_macro2::TokenStream>,
-                          call_args: &mut Vec<proc_macro2::TokenStream>,
-                          arg_types: &mut Vec<String>) {
+pub(crate) fn process_arg(
+    PatType { ty, pat, .. }: &PatType,
+    wrapper_args: &mut Vec<proc_macro2::TokenStream>,
+    call_args: &mut Vec<proc_macro2::TokenStream>,
+    arg_types: &mut Vec<String>,
+) {
     let arg_name = pat;
     let arg_type = quote!(#ty).to_string();
     // if arg_type is ["i8" | "i16" | "i32" | "i64"] ==> ["int_8" | "int_16" | "int_32" | "int_64"]
@@ -111,8 +149,8 @@ pub(crate) fn process_arg(PatType { ty, pat, .. }: &PatType,
         let arg_name_len = format_ident!("{}_len", quote!(#arg_name).to_string());
         wrapper_args.push(quote! { #arg_name: *const libc::c_char, #arg_name_len: i32 });
         call_args.push(quote! { std::str::from_utf8(
-                    unsafe { std::slice::from_raw_parts(#arg_name as *const u8, #arg_name_len as usize) }
-                ).unwrap() });
+            unsafe { std::slice::from_raw_parts(#arg_name as *const u8, #arg_name_len as usize) }
+        ).unwrap() });
     } else {
         wrapper_args.push(quote! { #arg_name: #ty });
         call_args.push(quote! { #arg_name });
