@@ -8,10 +8,11 @@ use syn::{Attribute, ItemFn, LitBool, LitStr};
 // return a tuple of (name, aliases, needs_context)
 pub(crate) fn extract_udf_meta(
     input: proc_macro2::TokenStream,
-) -> Result<(Option<String>, Vec<String>, bool, Option<String>), syn::Error> {
+) -> Result<(Option<String>, Vec<String>, bool, bool, Option<String>), syn::Error> {
     let mut name = None;
     let mut aliases = Vec::new();
     let mut needs_context = false;
+    let mut can_return_errors = false;
     let mut result_nullable = None;
 
     // this is a workaround to parse the attributes
@@ -52,6 +53,11 @@ pub(crate) fn extract_udf_meta(
                     let b: LitBool = value.parse()?;
                     needs_context = b.value;
                     Ok(())
+                } else if meta.path.is_ident("can_return_errors") {
+                    let value = meta.value()?;
+                    let b: LitBool = value.parse()?;
+                    can_return_errors = b.value;
+                    Ok(())
                 } else if meta.path.is_ident("result_nullable") {
                     let value = meta.value()?;
                     let s: LitStr = value.parse()?;
@@ -77,7 +83,7 @@ pub(crate) fn extract_udf_meta(
             })?;
         }
     }
-    Ok((name, aliases, needs_context, result_nullable))
+    Ok((name, aliases, needs_context, can_return_errors, result_nullable))
 }
 
 pub(crate) fn extract_params(input: proc_macro2::TokenStream) -> ItemFn {

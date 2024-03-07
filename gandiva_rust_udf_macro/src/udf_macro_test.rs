@@ -11,9 +11,10 @@ mod macro_tests {
             name: Option<String> = None,
             aliases: Vec<String> = Vec::new(),
             needs_context: bool = false,
+            can_return_errors: bool = false,
             result_nullable: Option<String> = None,
         ) -> proc_macro2::TokenStream {
-            udf_impl(input, name, aliases, needs_context, result_nullable)
+            udf_impl(input, name, aliases, needs_context, can_return_errors, result_nullable)
         }
     }
 
@@ -376,6 +377,7 @@ mod macro_tests {
             Some("my_udf".to_string()),
             vec!["your_udf".to_string()],
             true,
+            false,
             Some("never".to_string()),
         );
         let actual = extract_udf_meta(input);
@@ -433,7 +435,7 @@ mod macro_tests {
         let input: proc_macro2::TokenStream = quote::quote! {
             result_nullable = "if_null"
         };
-        let expected = (None, vec![], false, Some("if_null".to_string()));
+        let expected = (None, vec![], false, false, Some("if_null".to_string()));
         let actual = extract_udf_meta(input);
         assert_eq!(actual.unwrap(), expected);
     }
@@ -474,7 +476,38 @@ mod macro_tests {
             Some("my_udf".to_string()),
             vec!["your_udf".to_string(), "her_udf".to_string()],
             false,
+            false,
             Some("internal".to_string()),
+        );
+        let actual = extract_udf_meta(input);
+        assert_eq!(actual.unwrap(), expected);
+    }
+
+    #[test]
+    fn test_extract_udf_meta_default() {
+        let input: proc_macro2::TokenStream = quote::quote! {};
+        let expected = (
+            None,
+            vec![],
+            false,
+            false,
+            None,
+        );
+        let actual = extract_udf_meta(input);
+        assert_eq!(actual.unwrap(), expected);
+    }
+
+    #[test]
+    fn test_extract_udf_meta_can_return_errors() {
+        let input: proc_macro2::TokenStream = quote::quote! {
+            can_return_errors = true
+        };
+        let expected = (
+            None,
+            vec![],
+            false,
+            true,
+            None,
         );
         let actual = extract_udf_meta(input);
         assert_eq!(actual.unwrap(), expected);

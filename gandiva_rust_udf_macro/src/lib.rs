@@ -27,6 +27,7 @@ fn udf_impl(
     name: Option<String>,
     aliases: Vec<String>,
     needs_context: bool,
+    can_return_errors: bool,
     result_nullable: Option<String>,
 ) -> proc_macro2::TokenStream {
     let function = extract_params(input);
@@ -91,6 +92,7 @@ fn udf_impl(
                 name,
                 aliases,
                 final_needs_context,
+                can_return_errors,
                 result_nullable,
                 &return_arrow_type,
             );
@@ -109,9 +111,9 @@ pub fn udf(
     input: proc_macro::TokenStream,
 ) -> proc_macro::TokenStream {
     match extract_udf_meta(attrs.into()) {
-        Ok((name, aliases, needs_context, result_nullable)) => {
+        Ok((name, aliases, needs_context, can_return_errors, result_nullable)) => {
             let input = proc_macro2::TokenStream::from(input);
-            udf_impl(input, name, aliases, needs_context, result_nullable).into()
+            udf_impl(input, name, aliases, needs_context, can_return_errors, result_nullable).into()
         }
         Err(e) => syn::Error::new_spanned(e.to_compile_error(), e.to_string())
             .to_compile_error()

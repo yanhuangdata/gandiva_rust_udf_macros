@@ -20,6 +20,14 @@ fn _needs_context_quote(needs_context: bool) -> proc_macro2::TokenStream {
     }
 }
 
+fn _can_return_errors_quote(can_return_errors: bool) -> proc_macro2::TokenStream {
+    if can_return_errors {
+        quote! { can_return_errors: true, }
+    } else {
+        quote! {}
+    }
+}
+
 fn _result_nullable_quote(result_nullable: Option<String>) -> proc_macro2::TokenStream {
     if let Some(result_nullable) = result_nullable {
         quote! { result_nullable: #result_nullable.to_string(), }
@@ -73,6 +81,7 @@ pub(crate) fn register_func_meta_quote(
     name: Option<String>,
     aliases: Vec<String>,
     needs_context: bool,
+    can_return_errors: bool,
     result_nullable: Option<String>,
     return_arrow_type: &str,
 ) -> proc_macro2::TokenStream {
@@ -89,6 +98,7 @@ pub(crate) fn register_func_meta_quote(
 
     // conditionally add needs_context
     let needs_context_quote = _needs_context_quote(needs_context);
+    let can_return_errors_quote = _can_return_errors_quote(can_return_errors);
     let register_func_meta = quote! {
         pub fn #register_func_ident() {
             gandiva_rust_udf_shared::register_udf(gandiva_rust_udf_shared::UdfMetaData {
@@ -99,6 +109,7 @@ pub(crate) fn register_func_meta_quote(
                 pc_name: #pc_name_str.to_string(),
                 #result_nullable_quote
                 #needs_context_quote
+                #can_return_errors_quote
                 ..Default::default()
             });
         }
