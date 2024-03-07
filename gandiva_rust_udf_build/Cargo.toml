@@ -1,6 +1,6 @@
 [package]
 name = "gandiva_rust_udf_build"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 authors = ["yanhuangdata"]
 description = "A basic shared library for gandiva rust udf"
@@ -9,6 +9,12 @@ readme = "README.md"
 homepage = "https://github.com/yanhuangdata/gandiva_rust_udf_macros"
 repository = "https://github.com/yanhuangdata/gandiva_rust_udf_macros"
 license-file = "LICENSE"
+
+[[bin]]
+name = "gen-udf-reg"
+
+[lib]
+name = "gandiva_rust_udf_build"
 
 [dependencies]
 lazy_static = { version = "1.4.0", features = [] }
