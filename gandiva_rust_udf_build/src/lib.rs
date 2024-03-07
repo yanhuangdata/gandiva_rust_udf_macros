@@ -2,7 +2,7 @@ extern crate gandiva_rust_udf_shared;
 extern crate gandiva_rust_udf_macro;
 
 use std::collections::HashMap;
-use gandiva_rust_udf_type::map_type;
+use gandiva_rust_udf_common::map_type;
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
 use std::fs;

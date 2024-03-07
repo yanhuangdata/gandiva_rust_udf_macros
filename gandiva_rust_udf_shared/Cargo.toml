@@ -21,4 +21,4 @@ quote = "1.0.28"
 proc-macro2 = "1.0.78"
 toml = "0.8.10"
 strfmt = "0.2.4"
-gandiva_rust_udf_type = { path = "../gandiva_rust_udf_type" }
+gandiva_rust_udf_common = "0.1.0"
