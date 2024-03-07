@@ -1,5 +1,5 @@
-use syn::parse::Parser;
-use syn::{ItemFn, LitBool, LitStr};
+use syn::parse::{Parser};
+use syn::{Attribute, ItemFn, LitBool, LitStr};
 
 // Extract UDF meta from the #[udf(name="my_func", aliases = ["my_func1", "my_func2"])] macro attributes, including:
 // 1) name
@@ -14,7 +14,10 @@ pub(crate) fn extract_udf_meta(
     let mut needs_context = false;
     let mut result_nullable = None;
 
-    let attrs = syn::Attribute::parse_outer.parse2(input)?;
+    // this is a workaround to parse the attributes
+    // https://github.com/dtolnay/syn/issues/359
+    let attr_text = format!("#[udf({})]", input.to_string());
+    let attrs = Attribute::parse_outer.parse2(attr_text.parse()?)?;
     for attr in attrs {
         if attr.path().is_ident("udf") {
             attr.parse_nested_meta(|meta| {

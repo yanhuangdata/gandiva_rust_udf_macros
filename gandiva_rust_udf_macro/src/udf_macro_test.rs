@@ -367,12 +367,10 @@ mod macro_tests {
     #[test]
     fn test_extract_udf_meta() {
         let input: proc_macro2::TokenStream = quote::quote! {
-            #[udf(
-                name = "my_udf",
-                aliases = ["your_udf"],
-                needs_context = true,
-                result_nullable = "never"
-            )]
+            name = "my_udf",
+            aliases = ["your_udf"],
+            needs_context = true,
+            result_nullable = "never"
         };
         let expected = (
             Some("my_udf".to_string()),
@@ -387,7 +385,7 @@ mod macro_tests {
     #[test]
     fn test_extract_invalid_alias() {
         let input: proc_macro2::TokenStream = quote::quote! {
-            #[udf(aliases = [42])]
+            aliases = [42]
         };
         let actual = extract_udf_meta(input);
         // assert error occurs
@@ -400,7 +398,7 @@ mod macro_tests {
     #[test]
     fn test_extract_invalid_attribute() {
         let input: proc_macro2::TokenStream = quote::quote! {
-            #[udf(no_such_attr = 42)]
+            no_such_attr = 42
         };
         let actual = extract_udf_meta(input);
         assert_eq!(
@@ -412,7 +410,7 @@ mod macro_tests {
     #[test]
     fn test_extract_name_should_be_string() {
         let input: proc_macro2::TokenStream = quote::quote! {
-            #[udf(name = 42)]
+            name = 42
         };
         let actual = extract_udf_meta(input);
         assert_eq!(actual.err().unwrap().to_string(), "expected string literal");
@@ -421,7 +419,7 @@ mod macro_tests {
     #[test]
     fn test_extract_alias_should_be_array() {
         let input: proc_macro2::TokenStream = quote::quote! {
-            #[udf(aliases = "your_udf")]
+            aliases = "your_udf"
         };
         let actual = extract_udf_meta(input);
         assert_eq!(
@@ -433,7 +431,7 @@ mod macro_tests {
     #[test]
     fn test_extract_result_nullable_should_be_string() {
         let input: proc_macro2::TokenStream = quote::quote! {
-            #[udf(result_nullable = "if_null")]
+            result_nullable = "if_null"
         };
         let expected = (None, vec![], false, Some("if_null".to_string()));
         let actual = extract_udf_meta(input);
@@ -443,7 +441,7 @@ mod macro_tests {
     #[test]
     fn test_extract_invalid_result_nullable_value() {
         let input: proc_macro2::TokenStream = quote::quote! {
-            #[udf(result_nullable = "no_supported_nullable_value")]
+            result_nullable = "no_supported_nullable_value"
         };
         let actual = extract_udf_meta(input);
         assert_eq!(
@@ -455,7 +453,7 @@ mod macro_tests {
     #[test]
     fn test_extract_needs_context_should_be_bool() {
         let input: proc_macro2::TokenStream = quote::quote! {
-            #[udf(needs_context = 42)]
+            needs_context = 42
         };
         let actual = extract_udf_meta(input);
         assert_eq!(
@@ -467,12 +465,10 @@ mod macro_tests {
     #[test]
     fn test_extract_udf_meta_multi_aliases_false_needs_context() {
         let input: proc_macro2::TokenStream = quote::quote! {
-            #[udf(
-                name = "my_udf",
-                aliases = ["your_udf", "her_udf"],
-                needs_context = false,
-                result_nullable = "internal"
-            )]
+            name = "my_udf",
+            aliases = ["your_udf", "her_udf"],
+            needs_context = false,
+            result_nullable = "internal"
         };
         let expected = (
             Some("my_udf".to_string()),
