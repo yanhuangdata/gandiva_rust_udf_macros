@@ -12,9 +12,6 @@ use crate::quote_helper::{
 use quote::{format_ident, quote};
 use syn::{FnArg, ReturnType};
 use gandiva_rust_udf_common::map_type;
-use crate::quote_helper::{is_returning_string, string_function_wrapper_quote, function_wrapper_quote,
-                          register_func_meta_quote, process_arg, load_registered_udfs_quote};
-use crate::attr_parser::{extract_needs_context, extract_params};
 
 #[proc_macro_attribute]
 pub fn udf_registry(
