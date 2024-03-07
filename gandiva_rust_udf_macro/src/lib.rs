@@ -1,5 +1,4 @@
 mod udf_macro_test;
-mod type_mapping;
 mod quote_helper;
 mod attr_parser;
 
@@ -7,7 +6,7 @@ extern crate proc_macro;
 
 use quote::{format_ident, quote};
 use syn::{FnArg, ReturnType};
-use crate::type_mapping::map_type;
+use gandiva_rust_udf_type::map_type;
 use crate::quote_helper::{is_returning_string, string_function_wrapper_quote, function_wrapper_quote,
                           register_func_meta_quote, process_arg, load_registered_udfs_quote};
 use crate::attr_parser::{extract_needs_context, extract_params};
@@ -90,4 +89,11 @@ fn udf_impl(input: proc_macro2::TokenStream, mut needs_context: bool) -> proc_ma
 fn udf_registry_impl(input: proc_macro2::TokenStream) -> proc_macro2::TokenStream {
     let function = extract_params(input);
     load_registered_udfs_quote(function).into()
+}
+
+const VERSION: &str = env!("CARGO_PKG_VERSION");
+
+#[proc_macro]
+pub fn get_version(_item: proc_macro::TokenStream) -> proc_macro::TokenStream {
+    std::format!("fn get_macro_version() -> String {{ \"{}\".to_string() }}", VERSION).parse().unwrap()
 }

@@ -1,5 +1,5 @@
 // map type from Rust name into Arrow type name
-pub(crate) fn map_type(arg_type: &str) -> String {
+pub fn map_type(arg_type: &str) -> String {
     match arg_type {
         "& str" => "utf8",
         "bool" => "boolean",

@@ -1,5 +1,7 @@
 [workspace]
 members = [
     "gandiva_rust_udf_macro",
-    "gandiva_rust_udf_shared"
+    "gandiva_rust_udf_shared",
+    "gandiva_rust_udf_build",
+    "gandiva_rust_udf_type"
 ]
