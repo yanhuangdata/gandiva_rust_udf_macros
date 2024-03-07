@@ -7,7 +7,7 @@ mod attr_parser;
 
 extern crate proc_macro;
 
-use crate::attr_parser::{extract_params, extract_udf_meta, extract_udf_meta_impl};
+use crate::attr_parser::{extract_params, extract_udf_meta};
 use crate::quote_helper::{
     function_wrapper_quote, is_returning_string, load_registered_udfs_quote, process_arg,
     register_func_meta_quote, string_function_wrapper_quote,
@@ -115,9 +115,15 @@ pub fn udf(
     attrs: proc_macro::TokenStream,
     input: proc_macro::TokenStream,
 ) -> proc_macro::TokenStream {
-    let (name, aliases, needs_context, result_nullable) = extract_udf_meta(attrs);
-    let input = proc_macro2::TokenStream::from(input);
-    udf_impl(input, name, aliases, needs_context, result_nullable).into()
+    match extract_udf_meta(attrs.into()) {
+        Ok((name, aliases, needs_context, result_nullable)) => {
+            let input = proc_macro2::TokenStream::from(input);
+            udf_impl(input, name, aliases, needs_context, result_nullable).into()
+        }
+        Err(e) => syn::Error::new_spanned(e.to_compile_error(), e.to_string())
+            .to_compile_error()
+            .into(),
+    }
 }
 
 fn udf_registry_impl(input: proc_macro2::TokenStream) -> proc_macro2::TokenStream {

@@ -1,5 +1,6 @@
 #[cfg(test)]
 mod macro_tests {
+    use crate::extract_udf_meta;
     use crate::udf_impl;
     use crate::udf_registry_impl;
     use default_args::default_args;
@@ -361,5 +362,125 @@ mod macro_tests {
         };
         let actual = gen_udf!(input, result_nullable = Some("never".to_string()));
         assert_eq!(actual.to_string(), expected.to_string());
+    }
+
+    #[test]
+    fn test_extract_udf_meta() {
+        let input: proc_macro2::TokenStream = quote::quote! {
+            #[udf(
+                name = "my_udf",
+                aliases = ["your_udf"],
+                needs_context = true,
+                result_nullable = "never"
+            )]
+        };
+        let expected = (
+            Some("my_udf".to_string()),
+            vec!["your_udf".to_string()],
+            true,
+            Some("never".to_string()),
+        );
+        let actual = extract_udf_meta(input);
+        assert_eq!(actual.unwrap(), expected);
+    }
+
+    #[test]
+    fn test_extract_invalid_alias() {
+        let input: proc_macro2::TokenStream = quote::quote! {
+            #[udf(aliases = [42])]
+        };
+        let actual = extract_udf_meta(input);
+        // assert error occurs
+        assert_eq!(
+            actual.err().unwrap().to_string(),
+            "Expected string literal for function alias"
+        );
+    }
+
+    #[test]
+    fn test_extract_invalid_attribute() {
+        let input: proc_macro2::TokenStream = quote::quote! {
+            #[udf(no_such_attr = 42)]
+        };
+        let actual = extract_udf_meta(input);
+        assert_eq!(
+            actual.err().unwrap().to_string(),
+            "Unknown attribute for UDF function"
+        );
+    }
+
+    #[test]
+    fn test_extract_name_should_be_string() {
+        let input: proc_macro2::TokenStream = quote::quote! {
+            #[udf(name = 42)]
+        };
+        let actual = extract_udf_meta(input);
+        assert_eq!(actual.err().unwrap().to_string(), "expected string literal");
+    }
+
+    #[test]
+    fn test_extract_alias_should_be_array() {
+        let input: proc_macro2::TokenStream = quote::quote! {
+            #[udf(aliases = "your_udf")]
+        };
+        let actual = extract_udf_meta(input);
+        assert_eq!(
+            actual.err().unwrap().to_string(),
+            "expected square brackets"
+        );
+    }
+
+    #[test]
+    fn test_extract_result_nullable_should_be_string() {
+        let input: proc_macro2::TokenStream = quote::quote! {
+            #[udf(result_nullable = "if_null")]
+        };
+        let expected = (None, vec![], false, Some("if_null".to_string()));
+        let actual = extract_udf_meta(input);
+        assert_eq!(actual.unwrap(), expected);
+    }
+
+    #[test]
+    fn test_extract_invalid_result_nullable_value() {
+        let input: proc_macro2::TokenStream = quote::quote! {
+            #[udf(result_nullable = "no_supported_nullable_value")]
+        };
+        let actual = extract_udf_meta(input);
+        assert_eq!(
+            actual.err().unwrap().to_string(),
+            "Unsupported value for result_nullable attribute. Only if_null, never, internal are allowed."
+        );
+    }
+
+    #[test]
+    fn test_extract_needs_context_should_be_bool() {
+        let input: proc_macro2::TokenStream = quote::quote! {
+            #[udf(needs_context = 42)]
+        };
+        let actual = extract_udf_meta(input);
+        assert_eq!(
+            actual.err().unwrap().to_string(),
+            "expected boolean literal"
+        );
+    }
+
+    #[test]
+    fn test_extract_udf_meta_multi_aliases_false_needs_context() {
+        let input: proc_macro2::TokenStream = quote::quote! {
+            #[udf(
+                name = "my_udf",
+                aliases = ["your_udf", "her_udf"],
+                needs_context = false,
+                result_nullable = "internal"
+            )]
+        };
+        let expected = (
+            Some("my_udf".to_string()),
+            vec!["your_udf".to_string(), "her_udf".to_string()],
+            false,
+            Some("internal".to_string()),
+        );
+        let actual = extract_udf_meta(input);
+        assert_eq!(actual.unwrap(), expected);
     }
 }
