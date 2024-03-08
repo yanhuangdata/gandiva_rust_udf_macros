@@ -117,6 +117,10 @@ pub fn return_gdv_string(ctx: i64, result: &str, out_len: *mut i32) -> *mut libc
     result_ptr
 }
 
+// the #udf macro will generate a function for registration along with the C wrapper function
+// the function for registration will register the function metadata into UDF_REGISTRY
+// all UDFs' metadata is stored in the UDF_REGISTRY, which will be marshalled into JSON and read
+// by the library loader
 lazy_static! {
     pub static ref UDF_REGISTRY: std::sync::Mutex<Vec<UdfMetaData>> = std::sync::Mutex::new(vec![]);
 }
