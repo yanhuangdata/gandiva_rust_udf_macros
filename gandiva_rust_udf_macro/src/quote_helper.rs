@@ -85,24 +85,22 @@ pub(crate) fn register_func_meta_quote(
     result_nullable: Option<String>,
     return_arrow_type: &str,
 ) -> proc_macro2::TokenStream {
-    let base_name_str = function_name.to_string();
+    let base_name_str = name.unwrap_or(function_name.to_string());
     let arg_types_quotes = arg_types.iter().map(|arg_type| _data_type_quote(arg_type));
     let aliases_quotes = aliases.iter().map(|alias| quote! { #alias.to_string() });
     let pc_name_str = wrapper_name.to_string();
     // register the wrapper function metadata
     let register_func_ident = format_ident!("register_{}", wrapper_name);
     let return_type_quote = _data_type_quote(return_arrow_type);
-    let udf_name = name.unwrap_or(base_name_str.clone());
 
     let result_nullable_quote = _result_nullable_quote(result_nullable);
 
-    // conditionally add needs_context
     let needs_context_quote = _needs_context_quote(needs_context);
     let can_return_errors_quote = _can_return_errors_quote(can_return_errors);
     let register_func_meta = quote! {
         pub fn #register_func_ident() {
             gandiva_rust_udf_shared::register_udf(gandiva_rust_udf_shared::UdfMetaData {
-                name: #udf_name.to_string(),
+                name: #base_name_str.to_string(),
                 aliases: vec![#(#aliases_quotes),*],
                 param_types: vec![#(#arg_types_quotes),*],
                 return_type: #return_type_quote,
