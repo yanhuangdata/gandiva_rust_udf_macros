@@ -117,6 +117,18 @@ pub fn return_gdv_string(ctx: i64, result: &str, out_len: *mut i32) -> *mut libc
     result_ptr
 }
 
+#[allow(dead_code)]
+pub fn set_error_msg(ctx: i64, error_msg: &str) {
+    unsafe {
+        if let Some(context_set_error_msg) = GDV_FN_CONTEXT_SET_ERROR_MSG {
+            let error_message = CString::new(error_msg).expect("CString::new failed");
+            context_set_error_msg(ctx, error_message.as_ptr());
+        } else {
+            eprintln!("GDV_FN_CONTEXT_SET_ERROR_MSG is not set");
+        }
+    }
+}
+
 // the #udf macro will generate a function for registration along with the C wrapper function
 // the function for registration will register the function metadata into UDF_REGISTRY
 // all UDFs' metadata is stored in the UDF_REGISTRY, which will be marshalled into JSON and read

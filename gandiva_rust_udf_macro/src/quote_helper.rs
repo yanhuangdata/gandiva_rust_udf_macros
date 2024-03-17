@@ -42,7 +42,27 @@ pub(crate) fn string_function_wrapper_quote(
     wrapper_args: &mut Vec<proc_macro2::TokenStream>,
     function_name: &Ident,
     call_args: &mut Vec<proc_macro2::TokenStream>,
+    can_return_errors: bool,
 ) -> proc_macro2::TokenStream {
+    let result_handling = if can_return_errors {
+        quote! {
+            match result {
+                Ok(value) => gandiva_rust_udf_shared::return_gdv_string(ctx, &value, out_len),
+                Err(err) => {
+                    gandiva_rust_udf_shared::set_error_msg(ctx, &err);
+                    unsafe {
+                        *out_len = 0;
+                    }
+                    std::ptr::null_mut()
+                }
+            }
+        }
+    } else {
+        quote! {
+            gandiva_rust_udf_shared::return_gdv_string(ctx, &result, out_len)
+        }
+    };
+
     quote! {
         // output the original function
         #function
@@ -50,7 +70,7 @@ pub(crate) fn string_function_wrapper_quote(
         #[no_mangle]
         pub extern "C" fn #wrapper_name(#(#wrapper_args),*) -> *mut libc::c_char {
             let result = #function_name(#(#call_args),*);
-            gandiva_rust_udf_shared::return_gdv_string(ctx, &result, out_len)
+            #result_handling
         }
     }
 }
@@ -62,14 +82,40 @@ pub(crate) fn function_wrapper_quote(
     function_name: &Ident,
     call_args: &mut Vec<proc_macro2::TokenStream>,
     ty: &Box<Type>,
+    can_return_errors: bool,
 ) -> proc_macro2::TokenStream {
+    // if error occurs, set error message and return default value
+    // if return type is bool, return false, else return 0 (and converted into corresponding type)
+    let default_return_value = if quote!(#ty).to_string() == "bool" {
+        quote! { false }
+    } else {
+        quote! { 0.into() }
+    };
+
+    let result_handling = if can_return_errors {
+        quote! {
+            match result {
+                Ok(return_value) => return_value,
+                Err(err) => {
+                    gandiva_rust_udf_shared::set_error_msg(ctx, &err);
+                    #default_return_value
+                }
+            }
+        }
+    } else {
+        quote! {
+            result
+        }
+    };
+
     quote! {
       // output the original function
       #function
 
       #[no_mangle]
       pub extern "C" fn #wrapper_name(#(#wrapper_args),*) -> #ty {
-        #function_name(#(#call_args),*)
+        let result = #function_name(#(#call_args),*);
+        #result_handling
       }
     }
 }

@@ -31,7 +31,8 @@ mod macro_tests {
 
             #[no_mangle]
             pub extern "C" fn my_udf_() -> f64 {
-                my_udf()
+                let result = my_udf();
+                result
             }
 
             pub fn register_my_udf_() {
@@ -62,7 +63,8 @@ mod macro_tests {
 
             #[no_mangle]
             pub extern "C" fn my_udf_int64(x: i64) -> f64 {
-                my_udf(x)
+                let result = my_udf(x);
+                result
             }
 
             pub fn register_my_udf_int64() {
@@ -93,7 +95,8 @@ mod macro_tests {
 
             #[no_mangle]
             pub extern "C" fn my_udf_boolean(x: bool) -> bool {
-                my_udf(x)
+                let result = my_udf(x);
+                result
             }
 
             pub fn register_my_udf_boolean() {
@@ -124,7 +127,8 @@ mod macro_tests {
 
             #[no_mangle]
             pub extern "C" fn my_udf_int64_int32(x: i64, y: i32) -> f32 {
-                my_udf(x, y)
+                let result = my_udf(x, y);
+                result
             }
 
             pub fn register_my_udf_int64_int32() {
@@ -158,9 +162,10 @@ mod macro_tests {
 
             #[no_mangle]
             pub extern "C" fn my_udf_utf8(x: *const libc::c_char, x_len: i32) -> bool {
-                my_udf(std::str::from_utf8(
+                let result = my_udf(std::str::from_utf8(
                     unsafe { std::slice::from_raw_parts(x as *const u8, x_len as usize) }
-                ).unwrap())
+                ).unwrap());
+                result
             }
 
             pub fn register_my_udf_utf8() {
@@ -191,9 +196,10 @@ mod macro_tests {
 
             #[no_mangle]
             pub extern "C" fn my_udf_utf8(ctx: i64, x: *const libc::c_char, x_len: i32) -> bool {
-                my_udf(std::str::from_utf8(
+                let result = my_udf(std::str::from_utf8(
                     unsafe { std::slice::from_raw_parts(x as *const u8, x_len as usize) }
-                ).unwrap())
+                ).unwrap());
+                result
             }
 
             pub fn register_my_udf_utf8() {
@@ -284,7 +290,8 @@ mod macro_tests {
 
             #[no_mangle]
             pub extern "C" fn my_udf_int64(x: i64) -> f64 {
-                my_udf(x)
+                let result = my_udf(x);
+                result
             }
 
             pub fn register_my_udf_int64() {
@@ -315,7 +322,8 @@ mod macro_tests {
 
             #[no_mangle]
             pub extern "C" fn my_udf_int64(x: i64) -> f64 {
-                my_udf(x)
+                let result = my_udf(x);
+                result
             }
 
             pub fn register_my_udf_int64() {
@@ -346,7 +354,8 @@ mod macro_tests {
 
             #[no_mangle]
             pub extern "C" fn my_udf_int64(x: i64) -> f64 {
-                my_udf(x)
+                let result = my_udf(x);
+                result
             }
 
             pub fn register_my_udf_int64() {
@@ -511,5 +520,133 @@ mod macro_tests {
         );
         let actual = extract_udf_meta(input);
         assert_eq!(actual.unwrap(), expected);
+    }
+
+    #[test]
+    fn test_return_error_bool_udf() {
+        let input: proc_macro2::TokenStream = quote::quote! {
+            pub fn my_udf(x: &str) -> Result<bool, String> {
+                true
+            }
+        };
+
+        let expected: proc_macro2::TokenStream = quote::quote! {
+            #input
+
+            #[no_mangle]
+            pub extern "C" fn my_udf_utf8(ctx: i64, x: *const libc::c_char, x_len: i32) -> bool {
+                let result = my_udf(std::str::from_utf8(
+                    unsafe { std::slice::from_raw_parts(x as *const u8, x_len as usize) }
+                ).unwrap());
+                match result {
+                    Ok(return_value) => return_value,
+                    Err(err) => {
+                        gandiva_rust_udf_shared::set_error_msg(ctx, &err);
+                        false
+                    }
+                }
+            }
+
+            pub fn register_my_udf_utf8() {
+                gandiva_rust_udf_shared::register_udf(gandiva_rust_udf_shared::UdfMetaData {
+                    name: "my_udf".to_string(),
+                    aliases: vec![],
+                    param_types: vec![gandiva_rust_udf_shared::DataType { type_name: "utf8".to_string(), ..Default::default() }],
+                    return_type: gandiva_rust_udf_shared::DataType { type_name: "boolean".to_string(), ..Default::default() },
+                    pc_name: "my_udf_utf8".to_string(),
+                    needs_context: true,
+                    can_return_errors: true,
+                    ..Default::default()
+                });
+            }
+        };
+        let actual = gen_udf!(input);
+        assert_eq!(actual.to_string(), expected.to_string());
+    }
+
+    #[test]
+    fn test_return_error_int32_udf() {
+        let input: proc_macro2::TokenStream = quote::quote! {
+            pub fn my_udf(x: &str) -> Result<i32, String> {
+                true
+            }
+        };
+
+        // int32 return value uses 0.into() as the default return value
+        let expected: proc_macro2::TokenStream = quote::quote! {
+            #input
+
+            #[no_mangle]
+            pub extern "C" fn my_udf_utf8(ctx: i64, x: *const libc::c_char, x_len: i32) -> i32 {
+                let result = my_udf(std::str::from_utf8(
+                    unsafe { std::slice::from_raw_parts(x as *const u8, x_len as usize) }
+                ).unwrap());
+                match result {
+                    Ok(return_value) => return_value,
+                    Err(err) => {
+                        gandiva_rust_udf_shared::set_error_msg(ctx, &err);
+                        0.into()
+                    }
+                }
+            }
+
+            pub fn register_my_udf_utf8() {
+                gandiva_rust_udf_shared::register_udf(gandiva_rust_udf_shared::UdfMetaData {
+                    name: "my_udf".to_string(),
+                    aliases: vec![],
+                    param_types: vec![gandiva_rust_udf_shared::DataType { type_name: "utf8".to_string(), ..Default::default() }],
+                    return_type: gandiva_rust_udf_shared::DataType { type_name: "int32".to_string(), ..Default::default() },
+                    pc_name: "my_udf_utf8".to_string(),
+                    needs_context: true,
+                    can_return_errors: true,
+                    ..Default::default()
+                });
+            }
+        };
+        let actual = gen_udf!(input);
+        assert_eq!(actual.to_string(), expected.to_string());
+    }
+
+    #[test]
+    fn test_return_error_string_udf() {
+        let input: proc_macro2::TokenStream = quote::quote! {
+            pub fn my_udf(x: i64) -> Result<String, String> {
+                String::from("hello")
+            }
+        };
+
+        let expected: proc_macro2::TokenStream = quote::quote! {
+            #input
+
+            #[no_mangle]
+            pub extern "C" fn my_udf_int64(ctx: i64, x: i64, out_len: *mut i32) -> *mut libc::c_char {
+                let result = my_udf(x);
+                match result {
+                    Ok(value) => gandiva_rust_udf_shared::return_gdv_string(ctx, &value, out_len),
+                    Err(err) => {
+                        gandiva_rust_udf_shared::set_error_msg(ctx, &err);
+                        unsafe {
+                            *out_len = 0;
+                        }
+                        std::ptr::null_mut()
+                    }
+                }
+            }
+
+            pub fn register_my_udf_int64() {
+                gandiva_rust_udf_shared::register_udf(gandiva_rust_udf_shared::UdfMetaData {
+                    name: "my_udf".to_string(),
+                    aliases: vec![],
+                    param_types: vec![gandiva_rust_udf_shared::DataType { type_name: "int64".to_string(), ..Default::default() }],
+                    return_type: gandiva_rust_udf_shared::DataType { type_name: "utf8".to_string(), ..Default::default() },
+                    pc_name: "my_udf_int64".to_string(),
+                    needs_context: true,
+                    can_return_errors: true,
+                    ..Default::default()
+                });
+            }
+        };
+        let actual = gen_udf!(input);
+        assert_eq!(actual.to_string(), expected.to_string());
     }
 }

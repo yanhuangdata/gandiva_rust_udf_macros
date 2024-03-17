@@ -1,6 +1,6 @@
 [package]
 name = "gandiva_rust_udf_shared"
-version = "0.1.2"
+version = "0.1.4"
 edition = "2021"
 authors = ["yanhuangdata"]
 description = "A basic shared library for gandiva rust udf"
