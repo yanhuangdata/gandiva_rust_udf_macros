@@ -4,7 +4,7 @@ mod attr_parser;
 
 extern crate proc_macro;
 
-use crate::attr_parser::{extract_params, extract_udf_meta};
+use crate::attr_parser::{extract_params, extract_result_type, extract_udf_meta};
 use crate::quote_helper::{
     function_wrapper_quote, is_returning_string, load_registered_udfs_quote, process_arg,
     register_func_meta_quote, string_function_wrapper_quote,
@@ -22,23 +22,24 @@ pub fn udf_registry(
     udf_registry_impl(input).into()
 }
 
+
 fn udf_impl(
     input: proc_macro2::TokenStream,
     name: Option<String>,
     aliases: Vec<String>,
     needs_context: bool,
-    can_return_errors: bool,
+    mut _can_return_errors: bool,
     result_nullable: Option<String>,
 ) -> proc_macro2::TokenStream {
     let function = extract_params(input);
     let function_name = &function.sig.ident;
-    let return_type = &function.sig.output;
+    let (return_type, can_return_errors) = extract_result_type(&function.sig.output);
 
     let mut wrapper_args = Vec::new();
     let mut call_args = Vec::new();
     let mut arg_types = Vec::new();
-    let is_returning_string = is_returning_string(return_type);
-    let final_needs_context = needs_context || is_returning_string;
+    let is_returning_string = is_returning_string(&return_type);
+    let final_needs_context = needs_context || is_returning_string || can_return_errors;
 
     if final_needs_context {
         wrapper_args.push(quote! { ctx: i64 });
@@ -74,6 +75,7 @@ fn udf_impl(
                     &mut wrapper_args,
                     &function_name,
                     &mut call_args,
+                    can_return_errors,
                 )
             } else {
                 function_wrapper_quote(
@@ -82,7 +84,8 @@ fn udf_impl(
                     &mut wrapper_args,
                     &function_name,
                     &mut call_args,
-                    ty,
+                    &ty,
+                    can_return_errors,
                 )
             };
             let register_func_meta = register_func_meta_quote(

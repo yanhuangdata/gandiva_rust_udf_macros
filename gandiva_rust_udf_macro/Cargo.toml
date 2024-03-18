@@ -1,6 +1,6 @@
 [package]
 name = "gandiva_rust_udf_macro"
-version = "0.1.3"
+version = "0.1.4"
 edition = "2021"
 authors = ["yanhuangdata"]
 description = "A basic library for gandiva rust udf macro"
