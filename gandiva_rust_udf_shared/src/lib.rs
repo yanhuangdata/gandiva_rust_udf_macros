@@ -122,7 +122,7 @@ pub fn set_error_msg(ctx: i64, error_msg: &str) {
     unsafe {
         if let Some(context_set_error_msg) = GDV_FN_CONTEXT_SET_ERROR_MSG {
             let error_message = CString::new(error_msg).expect("CString::new failed");
-            context_set_error_msg(ctx, error_message.as_ptr());
+            context_set_error_msg(ctx, error_message.as_ptr() as *const i8);
         } else {
             eprintln!("GDV_FN_CONTEXT_SET_ERROR_MSG is not set");
         }
