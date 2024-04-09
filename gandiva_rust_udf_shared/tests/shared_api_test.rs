@@ -73,14 +73,19 @@ mod tests {
             initialize_gdv_fn_context(gdv_fn_context_arena_malloc, gdv_fn_context_set_error_msg);
             // out_length variable is used for storing the length of the returned string
             let mut out_length = 0;
-            let mut result = return_gdv_string(0, "hello", &mut out_length);
+            let result = return_gdv_string(0, "hello", &mut out_length);
             let result_c_str = std::ffi::CString::from_raw(result);
             let result_str = result_c_str.to_str().unwrap();
             assert_eq!(result_str, "hello");
             assert_eq!(out_length, 5);
+        }
 
-            // result is empty
-            result = return_gdv_string(0, "", &mut out_length);
+        // result is empty
+        unsafe {
+            initialize_gdv_fn_context(gdv_fn_context_arena_malloc, gdv_fn_context_set_error_msg);
+            // out_length variable is used for storing the length of the returned string
+            let mut out_length = 0;
+            let result = return_gdv_string(0, "", &mut out_length);
             let result_c_str = std::ffi::CString::from_raw(result);
             let result_str = result_c_str.to_str().unwrap();
             assert_eq!(result_str, "");
