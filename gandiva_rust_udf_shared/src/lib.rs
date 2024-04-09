@@ -86,6 +86,12 @@ pub extern "C" fn initialize_gdv_fn_context(
 #[allow(dead_code)]
 pub fn return_gdv_string(ctx: i64, result: &str, out_len: *mut i32) -> *mut libc::c_char {
     let result_len = result.len() as i32;
+    if result_len == 0 {
+        unsafe {
+            *out_len = 0;
+            return CString::new("").unwrap().into_raw();
+        }
+    }
     let result_ptr = unsafe {
         if let Some(context_arena_malloc) = GDV_FN_CONTEXT_ARENA_MALLOC {
             context_arena_malloc(ctx, result_len)
