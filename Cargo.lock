@@ -94,7 +94,7 @@ dependencies = [
 
 [[package]]
 name = "gandiva_rust_udf_shared"
-version = "0.1.4"
+version = "0.1.5"
 dependencies = [
  "gandiva_rust_udf_common 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "lazy_static",
